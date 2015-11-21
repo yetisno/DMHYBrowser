@@ -1,3 +1,5 @@
+![Main](https://raw.githubusercontent.com/yetisno/DMHYBrowser/assets/main.png)
+
 # Install
 ```shell
 $ bundle install
