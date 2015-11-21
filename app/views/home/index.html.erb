@@ -1,0 +1,102 @@
+<div>
+    <div class="col-xs-3 text-left">
+        <button id="load" class="btn btn-info" data-toggle="modal" data-target="#load_dialog" onclick="javascript:$('#load_url').val('');">載入RSS</button>
+        <div id="load_dialog" class="modal fade col-xs-12" role="dialog">
+            <%= form_for '', url: '/home', html: {id: 'load_form', method: :post}, remote: true, data: {type: :json} do |f| %>
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="h3">載入RSS</div>
+                            <input id="load_url" type="text" name="url" class="form-control" placeholder="https://share.dmhy.org/topics/rss/rss.xml?keyword=OVERLORD">
+                        </div>
+                        <div class="modal-footer">
+                            <input type="submit" id="load_btn" class="btn btn-primary" value="載入" onclick="javascript:$('#load_dialog').modal('hide');"/>
+                            <button class="btn btn-danger" data-dismiss="modal">關閉</button>
+                            <script type="text/javascript">
+	                            $("#load_dialog").on('shown.bs.modal', "", function (e, d) {
+		                            $(this).find("input:eq(1)").focus();
+	                            });
+                            </script>
+                        </div>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    </div>
+    <div class="col-xs-offset-6 col-xs-3">
+        <%= form_for '', html: {id: 'search_form', method: :post, class: 'form-inline'}, remote: true, data: {type: :json} do |f| %>
+            <div class="form-group">
+                <label for="search">搜尋：</label>
+                <input type="text" id="search" class="form-control" placeholder="干物..."/>
+            </div>
+        <% end %>
+    </div>
+    <table class="table table-hover table-striped">
+        <thead>
+        <tr>
+            <th>類別</th>
+	        <th>日期</th>
+            <th>發佈者</th>
+            <th>名稱</th>
+            <th>下載</th>
+        </tr>
+        </thead>
+        <tbody id="table_body">
+        </tbody>
+    </table>
+    <div id="record_dialog" class="modal fade col-xs-12" role="dialog">
+        <div class="modal-dialog" style="width: 100%; height: 100%;">
+            <div class="modal-content" style="width: 100%; height: 90%;">
+                <div class="modal-body" style="width: 100%; height: 90%;">
+                    <iframe style="width: 100%; height: 100%;"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" data-dismiss="modal">關閉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+	$("#search").focus();
+	$("#search").keypress(function (e) {
+		if (e.keyCode == 13) {
+			load();
+			e.preventDefault();
+		}
+	});
+	function load() {
+		var q = $("#search").val();
+		$.getJSON("/record?q=" + q, function (data) {
+			$("#table_body").html('');
+			$(data.records).each(function (k, v) {
+				var body = "<tr>";
+				body += "<td>" + v.category + "</td>";
+				body += "<td>" + v.pub_date.substr(0, 10) + "</td>";
+				body += "<td>" + v.group + "</td>";
+				body += "<td class='text-left record_link ' style='cursor:pointer;' data-val='" + v.link.replace(/http/g, 'https') + "'>" + v.name + "</td>";
+				if (v.downloaded) {
+					body += "<td><button class='btn btn-danger download' data-val='" + v.id + "'>下載</button></td>";
+				} else {
+					body += "<td><button class='btn btn-success download' data-val='" + v.id + "'>下載</button></td>";
+				}
+				$("#table_body").append(body);
+			});
+		});
+	}
+	setInterval(function () {
+		load();
+	}, 60000);
+	load();
+	$("#load_form").on('ajax:success', '', function (d) {
+		load();
+	});
+	$("#table_body").on('click', '.download', function (d) {
+		$.getJSON('download/' + $(this).data('val'), function (data) {
+			load();
+		});
+	}).on('click', '.record_link', function (d) {
+		$("#record_dialog .modal-body iframe").attr('src', $(this).data('val'));
+		$("#record_dialog").modal('show');
+	});
+</script>
