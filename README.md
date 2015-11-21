@@ -3,6 +3,7 @@
 # Install
 ```shell
 $ bundle install
+$ rake db:migrate
 ```
 
 # Run
